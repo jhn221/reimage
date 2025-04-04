@@ -158,7 +158,8 @@ const TestPage = () => {
           if (e.target === e.target.getStage()) {
             setSelectedId(null);
           }
-        }}>
+        }}
+      >
         <Layer>
           <Rect
             x={0}
@@ -192,7 +193,8 @@ const TestPage = () => {
                   node.moveToTop();
                   node.getLayer().batchDraw();
                 }
-              }}>
+              }}
+            >
               🔼 맨 앞으로
             </button>
             <button
@@ -203,7 +205,8 @@ const TestPage = () => {
                   node.getLayer().batchDraw();
                 }
               }}
-              style={{ marginLeft: 10 }}>
+              style={{ marginLeft: 10 }}
+            >
               🔽 맨 뒤로
             </button>
           </>
