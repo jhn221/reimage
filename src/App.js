@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { Stage, Layer, Image, Transformer } from "react-konva";
+import { Stage, Layer, Image, Transformer, Rect } from "react-konva";
 import testImg1 from "./test.jpg";
 import testImg2 from "./logo.svg";
 const loadImage = (src) => {
@@ -42,8 +42,33 @@ const ImageItem = ({ image, isSelected, onSelect, onChange }) => {
         draggable
         onClick={() => onSelect(image.id)}
         onTap={() => onSelect(image.id)}
+        onDragMove={(e) => {
+          const node = imageRef.current;
+          const box = node.getClientRect(); // 이미지 전체 실제 영역
+
+          const stage = node.getStage();
+          const stageWidth = stage.width();
+          const stageHeight = stage.height();
+
+          let dx = 0;
+          let dy = 0;
+
+          if (box.x < 0) dx = -box.x;
+          if (box.y < 0) dy = -box.y;
+          if (box.x + box.width > stageWidth)
+            dx = stageWidth - (box.x + box.width);
+          if (box.y + box.height > stageHeight)
+            dy = stageHeight - (box.y + box.height);
+
+          node.x(node.x() + dx);
+          node.y(node.y() + dy);
+        }}
         onDragEnd={(e) => {
-          onChange(image.id, { x: e.target.x(), y: e.target.y() });
+          const node = imageRef.current;
+          onChange(image.id, {
+            x: node.x(),
+            y: node.y(),
+          });
         }}
         onTransformEnd={(e) => {
           const node = imageRef.current;
@@ -68,6 +93,10 @@ const ImageItem = ({ image, isSelected, onSelect, onChange }) => {
 };
 
 const TestPage = () => {
+  const [stageSize, setStageSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
   const [images, setImages] = useState([
     {
       id: 1,
@@ -113,6 +142,16 @@ const TestPage = () => {
         }}
       >
         <Layer>
+          <Rect
+            x={0}
+            y={0}
+            width={stageSize.width}
+            height={stageSize.height}
+            stroke="red"
+            strokeWidth={2}
+            dash={[10, 5]}
+            listening={false}
+          />
           {images.map((img) => (
             <ImageItem
               key={img.id}
