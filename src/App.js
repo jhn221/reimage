@@ -11,7 +11,7 @@ const loadImage = (src) => {
   });
 };
 
-const ImageItem = ({ image, isSelected, onSelect, onChange }) => {
+const ImageItem = ({ image, isSelected, onSelect, onChange, onRefReady }) => {
   const imageRef = useRef(null);
   const trRef = useRef(null);
   const [imgElement, setImgElement] = useState(null);
@@ -19,6 +19,11 @@ const ImageItem = ({ image, isSelected, onSelect, onChange }) => {
   useEffect(() => {
     loadImage(image.src).then(setImgElement);
   }, [image.src]);
+  useEffect(() => {
+    if (imageRef.current && onRefReady) {
+      onRefReady(image.id, imageRef.current);
+    }
+  }, [imgElement]);
 
   useEffect(() => {
     if (isSelected && trRef.current && imageRef.current) {
@@ -93,10 +98,15 @@ const ImageItem = ({ image, isSelected, onSelect, onChange }) => {
 };
 
 const TestPage = () => {
-  const [stageSize, setStageSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const imageRefs = useRef({});
+  const stageRef = useRef(null);
+  const handleRefReady = (id, ref) => {
+    imageRefs.current[id] = ref;
+  };
+  // const [stageSize, setStageSize] = useState({
+  //   width: 100%,
+  //   height: window.innerHeigh,
+  // });
   const [images, setImages] = useState([
     {
       id: 1,
@@ -129,24 +139,32 @@ const TestPage = () => {
     );
   };
 
+  const handleExport = () => {
+    const uri = stageRef.current.toDataURL({ pixelRatio: 2 }); // 고화질
+    const link = document.createElement("a");
+    link.download = "canvas-export.png";
+    link.href = uri;
+    link.click();
+  };
+
   return (
     <div style={{ textAlign: "center", marginTop: 20 }}>
       <h2>Konva 다중 이미지 이동, 크기 조절, 회전</h2>
       <Stage
+        ref={stageRef}
         width={window.innerWidth}
         height={window.innerHeight}
         onMouseDown={(e) => {
           if (e.target === e.target.getStage()) {
             setSelectedId(null);
           }
-        }}
-      >
+        }}>
         <Layer>
           <Rect
             x={0}
             y={0}
-            width={stageSize.width}
-            height={stageSize.height}
+            width="100%"
+            height="90%"
             stroke="red"
             strokeWidth={2}
             dash={[10, 5]}
@@ -159,10 +177,41 @@ const TestPage = () => {
               isSelected={img.id === selectedId}
               onSelect={handleSelect}
               onChange={handleChange}
+              onRefReady={handleRefReady}
             />
           ))}
         </Layer>
       </Stage>
+      <div style={{ marginBottom: 10 }}>
+        {selectedId && (
+          <>
+            <button
+              onClick={() => {
+                const node = imageRefs.current[selectedId];
+                if (node) {
+                  node.moveToTop();
+                  node.getLayer().batchDraw();
+                }
+              }}>
+              🔼 맨 앞으로
+            </button>
+            <button
+              onClick={() => {
+                const node = imageRefs.current[selectedId];
+                if (node) {
+                  node.moveToBottom();
+                  node.getLayer().batchDraw();
+                }
+              }}
+              style={{ marginLeft: 10 }}>
+              🔽 맨 뒤로
+            </button>
+          </>
+        )}
+        <div style={{ marginBottom: 10 }}>
+          <button onClick={handleExport}>🖼️ 캔버스 이미지 저장</button>
+        </div>
+      </div>
     </div>
   );
 };
